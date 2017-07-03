@@ -20,7 +20,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "signal_io/interface.h"
+#include "signal_io_interface.h"
 #include "can_network.h"
 
 #include "klib/khash.h"
@@ -135,6 +135,8 @@ size_t Read( int taskID, unsigned int channel, double* ref_value )
   double currentMA = currentHEX - ( ( currentHEX >= 0x8000 ) ? 0xFFFF : 0 );
   task->measuresList[ INPUT_CURRENT ] = currentMA / 1000.0;
   
+  //DEBUG_PRINT( "current: hex=%d, mA=%d, A=%g", currentHEX, currentHEX - ( ( currentHEX >= 0x8000 ) ? 0xFFFF : 0 ), task->measuresList[ INPUT_CURRENT ] );
+  
   task->statusWord = task->readPayload[ 7 ] * 0x100 + task->readPayload[ 6 ];
   
   // Read values from PDO02 (Velocity and Tension) to buffer
@@ -247,7 +249,10 @@ bool Write( int taskID, unsigned int channel, double value )
   SignalIOTask task = kh_value( tasksList, taskIndex );
   
   int encoderSetpoint = (int) value;
-  int16_t currentSetpointHEX = (int16_t) value + ( ( value < 0.0 ) ? 0xFFFF : 0 );
+  
+  double currentSetpointMA = value * 1000.0;
+  int16_t currentSetpointHEX = (int16_t) currentSetpointMA + ( ( currentSetpointMA < 0.0 ) ? 0xFFFF : 0 );
+  //DEBUG_PRINT( "current setpoint: %d (hex: %d)", (int16_t) currentSetpointMA, currentSetpointHEX );
   
   // Set values for PDO01 (Position Setpoint and Control Word)
   task->writePayload[ 0 ] = (uint8_t) ( encoderSetpoint & 0x000000FF );
