@@ -1,3 +1,6 @@
 [submodule "debug"]
 	path = debug
 	url = https://github.com/LabDin/Simple-Data-Logging.git
+[submodule "timing"]
+	path = timing
+	url = https://github.com/LabDin/Precise-Timing

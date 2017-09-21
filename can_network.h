@@ -25,11 +25,15 @@
 #define CAN_NETWORK_H
 
 #include "can_frame.h"
+
+#include "timing/timing.h" 
+
+#include "khash.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "klib/khash.h"
+#include <stdint.h>
 
 enum CANFrameTypes { SDO, PDO01, PDO02, CAN_FRAME_TYPES_NUMBER };
 
@@ -77,7 +81,7 @@ void CANNetwork_Reset()
   u8 payload[8] = { 0x82 }; // Rest of the array as 0x0
   CANFrame_Write( NMT, payload );
   
-  Timing.Delay( 200 );
+  Time_Delay( 200 );
   
   payload[0] = 0x01; // Rest of the array as 0x0
   CANFrame_Write( NMT, payload );

@@ -23,9 +23,10 @@
 #include "signal_io_interface.h"
 #include "can_network.h"
 
-#include "klib/khash.h"
-
 #include "debug/data_logging.h"
+#include "timing/timing.h"
+
+#include "khash.h"
 
 enum { INPUT_POSITION, INPUT_VELOCITY, INPUT_CURRENT, INPUT_ANALOG, INPUT_CHANNELS_NUMBER };
 enum { OUTPUT_POSITION, OUTPUT_VELOCITY, OUTPUT_CURRENT, OUTPUT_CHANNELS_NUMBER };
@@ -174,7 +175,7 @@ void Reset( int taskID )
   task->controlWord |= FAULT_RESET;
   CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
   
-  Timing.Delay( 200 );
+  Time_Delay( 200 );
   
   task->controlWord &= (~FAULT_RESET);
   CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
@@ -223,7 +224,7 @@ void EnableOutput( int taskID, bool enable )
   task->controlWord &= (~ENABLE_OPERATION);
   CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
   
-  Timing.Delay( 200 );
+  Time_Delay( 200 );
   
   if( enable ) task->controlWord |= ENABLE_OPERATION;
   else task->controlWord &= (~SWITCH_ON);

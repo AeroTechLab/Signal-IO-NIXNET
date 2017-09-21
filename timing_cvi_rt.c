@@ -7,8 +7,6 @@
 
 #include <rtutil.h>
 
-DEFINE_NAMESPACE_INTERFACE( Timing, TIMING_INTERFACE );
-
 // Make the calling thread wait for the given time ( in milliseconds )
 inline void Timing_Delay( unsigned long milliseconds )
 {

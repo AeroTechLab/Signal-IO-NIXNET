@@ -32,7 +32,7 @@
   #include "nixnet_stub.h"
 #endif
 
-#include "debug/async_debug.h"
+#include "debug/data_logging.h"
 
 #define CAN_FRAME_ID_MAX_SIZE 16
 
