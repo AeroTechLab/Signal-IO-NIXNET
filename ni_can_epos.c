@@ -67,6 +67,8 @@ int InitTask( const char* taskConfig )
   
   int taskKey = (int) kh_str_hash_func( taskConfig );
   
+  //DEBUG_PRINT( "trying to create task on node %s", taskConfig ); 
+  
   int insertionStatus;
   khint_t newTaskIndex = kh_put( TaskInt, tasksList, taskKey, &insertionStatus );
   if( insertionStatus > 0 )
@@ -79,9 +81,9 @@ int InitTask( const char* taskConfig )
       return -1;
     }
         
-    DEBUG_PRINT( "new key %d inserted (iterator: %u - total: %u)", kh_key( tasksList, newTaskIndex ), newTaskIndex, kh_size( tasksList ) );
+    //DEBUG_PRINT( "task %s key %d inserted (iterator: %u - total: %u)", taskConfig, kh_key( tasksList, newTaskIndex ), newTaskIndex, kh_size( tasksList ) );
   }
-  else if( insertionStatus == 0 ) { DEBUG_PRINT( "task key %d already exists (iterator %u)", taskKey, newTaskIndex ); }
+  //else if( insertionStatus == 0 ) { DEBUG_PRINT( "task %s (key %d) already exists (iterator %u)", taskConfig, taskKey, newTaskIndex ); }
   
   return (int) kh_key( tasksList, newTaskIndex );
 }
@@ -146,7 +148,7 @@ size_t Read( int taskID, unsigned int channel, double* ref_value )
   task->measuresList[ INPUT_ANALOG ] = task->readPayload[ 5 ] * 0x100 + task->readPayload[ 4 ];
     
   *ref_value = task->measuresList[ channel ];
-
+  
   return 1;
 }
 
@@ -352,7 +354,7 @@ SignalIOTask LoadTaskData( const char* taskConfig )
   
   unsigned int nodeID = (unsigned int) strtoul( taskConfig, NULL, 0 );
   
-  DEBUG_PRINT( "trying to load CAN interface for node %u", nodeID );
+  //DEBUG_PRINT( "trying to load CAN interface for node %u", nodeID );
   
   for( size_t frameType = 0; frameType < CAN_FRAME_TYPES_NUMBER; frameType++ )
   {

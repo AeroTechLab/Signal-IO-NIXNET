@@ -70,7 +70,7 @@ CANFrame CANFrame_Init( enum CANFrameMode mode, const char* interfaceName, const
 
   strcpy( frame->id, frameID );
   
-  DEBUG_PRINT( "creating frame %s of type %d and mode %d", frame->id, frame->type, mode );
+  //DEBUG_PRINT( "creating frame %s of type %d and mode %d", frame->id, frame->type, mode );
   
   //Create an xnet session
   nxStatus_t statusCode = nxCreateSession( databaseName, clusterName, frameID, interfaceName, (u32) mode, &(frame->ref_session) );
@@ -82,7 +82,7 @@ CANFrame CANFrame_Init( enum CANFrameMode mode, const char* interfaceName, const
     return NULL;
   }
   
-  /*DEBUG_EVENT( 1,*/DEBUG_PRINT( "created frame %s session %u", frameID, frame->ref_session );
+  //DEBUG_PRINT( "created frame %s session %u", frameID, frame->ref_session );
 
   return frame;
 }

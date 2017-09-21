@@ -109,7 +109,7 @@ CANFrame CANNetwork_InitFrame( enum CANFrameTypes type, enum CANFrameMode mode, 
 {
   char frameAddress[ ADDRESS_MAX_LENGTH ];
   
-  DEBUG_PRINT( "Trying to create %s frame (type %d) on node %u", CAN_FRAME_NAMES[ type ], type, nodeID );
+  //DEBUG_PRINT( "Trying to create %s frame (type %d) on node %u", CAN_FRAME_NAMES[ type ], type, nodeID );
   
   if( type >= CAN_FRAME_TYPES_NUMBER ) return NULL;
   
@@ -120,7 +120,7 @@ CANFrame CANNetwork_InitFrame( enum CANFrameTypes type, enum CANFrameMode mode, 
   
   snprintf( frameAddress, ADDRESS_MAX_LENGTH, "%s_%s_%02u", CAN_FRAME_NAMES[ type ], modeName, nodeID );
   
-  DEBUG_PRINT( "creating frame %s on mode %d (key: %d)", frameAddress, mode, frameKey );
+  //DEBUG_PRINT( "creating frame %s on mode %d (key: %d)", frameAddress, mode, frameKey );
   
   if( framesList == NULL ) CANNetwork_Start();
   
