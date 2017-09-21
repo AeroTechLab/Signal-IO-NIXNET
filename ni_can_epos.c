@@ -25,7 +25,7 @@
 
 #include "klib/khash.h"
 
-#include "debug/async_debug.h"
+#include "debug/data_logging.h"
 
 enum { INPUT_POSITION, INPUT_VELOCITY, INPUT_CURRENT, INPUT_ANALOG, INPUT_CHANNELS_NUMBER };
 enum { OUTPUT_POSITION, OUTPUT_VELOCITY, OUTPUT_CURRENT, OUTPUT_CHANNELS_NUMBER };
