@@ -20,7 +20,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "signal_io_interface.h"
+#include "signal_io/signal_io.h"
 #include "can_network.h"
 
 #include "debug/data_logging.h"
@@ -42,7 +42,6 @@ typedef struct _SignalIOTaskData
   CANFrame readFramesList[ CAN_FRAME_TYPES_NUMBER ];
   CANFrame writeFramesList[ CAN_FRAME_TYPES_NUMBER ];
   uint16_t statusWord, controlWord;
-  unsigned int inputChannelUsesList[ INPUT_CHANNELS_NUMBER ];
   double measuresList[ INPUT_CHANNELS_NUMBER ];
   bool isReading, isOutputChannelUsed; 
   uint8_t readPayload[ 8 ], writePayload[ 8 ];
@@ -54,15 +53,15 @@ typedef SignalIOTaskData* SignalIOTask;
 KHASH_MAP_INIT_INT( TaskInt, SignalIOTask )
 static khash_t( TaskInt )* tasksList = NULL;
 
-DECLARE_MODULE_INTERFACE( SIGNAL_IO_INTERFACE ) 
+DECLARE_MODULE_INTERFACE( SIGNAL_IO_INTERFACE ); 
 
 static SignalIOTask LoadTaskData( const char* );
 static void UnloadTaskData( SignalIOTask );
 
 static void* AsyncReadBuffer( void* );
-static inline bool IsTaskStillUsed( SignalIOTask );
+static void EnableOutput( SignalIOTask, bool );
 
-int InitTask( const char* taskConfig )
+int InitDevice( const char* taskConfig )
 {
   if( tasksList == NULL ) tasksList = kh_init( TaskInt );
   
@@ -78,7 +77,7 @@ int InitTask( const char* taskConfig )
     if( kh_value( tasksList, newTaskIndex ) == NULL )
     {
       DEBUG_PRINT( "loading task %s failed", taskConfig );
-      EndTask( taskKey ); 
+      EndDevice( taskKey ); 
       return -1;
     }
         
@@ -89,7 +88,7 @@ int InitTask( const char* taskConfig )
   return (int) kh_key( tasksList, newTaskIndex );
 }
 
-void EndTask( int taskID )
+void EndDevice( int taskID )
 {
   khint_t taskIndex = kh_get( TaskInt, tasksList, (khint_t) taskID );
   if( taskIndex == kh_end( tasksList ) ) return;
@@ -98,7 +97,7 @@ void EndTask( int taskID )
   
   task->isReading = false;
   
-  if( IsTaskStillUsed( task ) ) return;
+  EnableOutput( task, false );
   
   UnloadTaskData( task );
   
@@ -181,67 +180,14 @@ void Reset( int taskID )
   CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
 }
 
-bool AcquireInputChannel( int taskID, unsigned int channel )
+bool CheckInputChannel( int taskID, unsigned int channel )
 {
   khint_t taskIndex = kh_get( TaskInt, tasksList, (khint_t) taskID );
   if( taskIndex == kh_end( tasksList ) ) return false;
-  
-  //DEBUG_PRINT( "aquiring channel %u from task %d", channel, taskID );
-  
-  SignalIOTask task = kh_value( tasksList, taskIndex );
   
   if( channel >= INPUT_CHANNELS_NUMBER ) return false;
   
-  if( task->inputChannelUsesList[ channel ] >= SIGNAL_INPUT_CHANNEL_MAX_USES ) return false;
-  
-  task->inputChannelUsesList[ channel ]++;
-  
   return true;
-}
-
-void ReleaseInputChannel( int taskID, unsigned int channel )
-{
-  khint_t taskIndex = kh_get( TaskInt, tasksList, (khint_t) taskID );
-  if( taskIndex == kh_end( tasksList ) ) return;
-  
-  SignalIOTask task = kh_value( tasksList, taskIndex );
-  
-  if( channel >= INPUT_CHANNELS_NUMBER ) return;
-  
-  if( task->inputChannelUsesList[ channel ] > 0 ) task->inputChannelUsesList[ channel ]--;
-  
-  if( !IsTaskStillUsed( task ) && !task->isReading ) EndTask( taskID );
-}
-
-void EnableOutput( int taskID, bool enable )
-{
-  khint_t taskIndex = kh_get( TaskInt, tasksList, (khint_t) taskID );
-  if( taskIndex == kh_end( tasksList ) ) return;
-  
-  SignalIOTask task = kh_value( tasksList, taskIndex );
-  
-  task->controlWord |= SWITCH_ON;
-  task->controlWord &= (~ENABLE_OPERATION);
-  CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
-  
-  Time_Delay( 200 );
-  
-  if( enable ) task->controlWord |= ENABLE_OPERATION;
-  else task->controlWord &= (~SWITCH_ON);
-    
-  CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
-}
-
-bool IsOutputEnabled( int taskID )
-{
-  khint_t taskIndex = kh_get( TaskInt, tasksList, (khint_t) taskID );
-  if( taskIndex == kh_end( tasksList ) ) return false;
-  
-  SignalIOTask task = kh_value( tasksList, taskIndex );
-  
-  //task->statusWord = (uint16_t) CANNetwork_ReadSingleValue( task->writeFramesList[ SDO ], task->readFramesList[ SDO ], 0x6041, 0x00 );
-  
-  return (bool) ( task->statusWord & ( SWITCHED_ON | OPERATION_ENABLED ) );
 }
 
 bool Write( int taskID, unsigned int channel, double value )
@@ -291,6 +237,32 @@ bool Write( int taskID, unsigned int channel, double value )
   return true;
 }
 
+void EnableOutput( SignalIOTask task, bool enable )
+{
+  task->controlWord |= SWITCH_ON;
+  task->controlWord &= (~ENABLE_OPERATION);
+  CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
+  
+  Time_Delay( 200 );
+  
+  if( enable ) task->controlWord |= ENABLE_OPERATION;
+  else task->controlWord &= (~SWITCH_ON);
+    
+  CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6040, 0x00, task->controlWord );
+}
+
+//bool IsOutputEnabled( int taskID )
+//{
+//  khint_t taskIndex = kh_get( TaskInt, tasksList, (khint_t) taskID );
+//  if( taskIndex == kh_end( tasksList ) ) return false;
+  
+//  SignalIOTask task = kh_value( tasksList, taskIndex );
+  
+  //task->statusWord = (uint16_t) CANNetwork_ReadSingleValue( task->writeFramesList[ SDO ], task->readFramesList[ SDO ], 0x6041, 0x00 );
+  
+//  return (bool) ( task->statusWord & ( SWITCHED_ON | OPERATION_ENABLED ) );
+//}
+
 bool AcquireOutputChannel( int taskID, unsigned int channel )
 {
   const int OPERATION_MODES[ OUTPUT_CHANNELS_NUMBER ] = { 0xFF, 0xFE, 0xFD };
@@ -308,6 +280,8 @@ bool AcquireOutputChannel( int taskID, unsigned int channel )
   
   CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6060, 0x00, OPERATION_MODES[ channel ] );
   
+  EnableOutput( task, true );
+  
   task->isOutputChannelUsed = true;
   
   return true;
@@ -324,26 +298,9 @@ void ReleaseOutputChannel( int taskID, unsigned int channel )
   
   CANNetwork_WriteSingleValue( task->writeFramesList[ SDO ], 0x6060, 0x00, 0x00 );
   
+  EnableOutput( task, false );
+  
   task->isOutputChannelUsed = false;
-  
-  if( !task->isReading ) EndTask( taskID );
-}
-
-bool IsTaskStillUsed( SignalIOTask task )
-{
-  bool isStillUsed = false;
-  for( size_t channel = 0; channel < INPUT_CHANNELS_NUMBER; channel++ )
-  {
-    if( task->inputChannelUsesList[ channel ] > 0 )
-    {
-      isStillUsed = true;
-      break;
-    }
-  }
-  
-  if( task->isOutputChannelUsed ) isStillUsed = true;
-  
-  return isStillUsed;
 }
 
 SignalIOTask LoadTaskData( const char* taskConfig )

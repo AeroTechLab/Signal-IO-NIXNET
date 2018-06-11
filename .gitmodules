@@ -4,3 +4,6 @@
 [submodule "timing"]
 	path = timing
 	url = https://github.com/LabDin/Precise-Timing
+[submodule "signal_io"]
+	path = signal_io
+	url = https://github.com/LabDin/Signal-IO-Interface

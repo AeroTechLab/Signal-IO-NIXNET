@@ -140,6 +140,8 @@ CANFrame CANNetwork_InitFrame( enum CANFrameTypes type, enum CANFrameMode mode, 
       return NULL;
     }
   }
+  
+  //CANNetwork_ResetNodes();
 
   return kh_value( framesList, newFrameID );
 }
